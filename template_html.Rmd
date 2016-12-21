@@ -30,24 +30,27 @@ output:
 knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
 ```
 
-``` {r suositus}
+``` {r recomm}
+##############################################
+#
+# Plot that shows the recommended order to 
+# make courses
+#
+##############################################
 
 to_plot <- filterdata(coursedata, params$person)
 
 tooltip_css <- "background-color:white;padding:10px;font-style:italic;"
 
-#####################################################################
-#
 # Which courses from the recommendation list has the student done?
 #
-#####################################################################
-# http://stackoverflow.com/a/22949680
+# See http://stackoverflow.com/a/22949680
 
-# Code of all her courses, to be matched 
+# Codes of all her courses, to be matched to the combined key
 course_codes_from_to_plot_df <- list(to_plot$Kurssi_koodi)
 
 # Empty character vectors the size of the recommendations, 
-# first for indexing with "done", second for storing the combined key
+# the first one for indexing with "done", and the second one for storing the combined key
 this_is_done <- character(nrow(recomm_united))
 this_is_combined_key <- character(nrow(recomm_united))
 
@@ -60,7 +63,7 @@ for(i in seq_along(course_codes_from_to_plot_df[[1]])){
 } 
 recomm_united_done <- cbind(recomm_united, this_is_done, this_is_combined_key, stringsAsFactors = FALSE)
 
-# If output_vector=='', change Vari to white, i.e. not done yet
+# If this_is_combined_key is empty, change Vari to white which denotes a course not done yet
 courses_done <- recomm_united_done %>% 
   rename(oldVari = Vari) %>% 
   mutate(Vari = ifelse(this_is_combined_key =='', "white", oldVari)) %>% 
@@ -74,13 +77,13 @@ to_plot_o <- courses_done %>%
   mutate(w = cumsum(width)) %>%
   mutate(wm = w - width) %>%
   mutate(wt = wm + (w - wm)/2) %>% 
-  mutate(uid = combined)
+  mutate(uid = combined) # data_id value for the onclick function 
 
 plot_o <- draw_order(to_plot_o)
   
 ggiraph(code = print(plot_o + facet_grid(. ~schoolyear,
                                          scales = "free_x", 
-                                         space = "free_x") + theme(strip.text.x = element_text(size = 14))),
+                                         space = "free_x") + theme(strip.text.x = element_text(size = 20))),
         width=0.8,
         width_svg = 25,
         height_svg = 9,
@@ -90,21 +93,22 @@ ggiraph(code = print(plot_o + facet_grid(. ~schoolyear,
 ```
 
 ``` {r facet}
-
-###########################################################################
+################################################################
 #
+# Plot that shows the timeline of courses done by this student
+#
+################################################################
+
 # Add the combined key to courses for the onclick function
 #
-###########################################################################
-
-# From that row in suositus_united_done, where there is a matching Kurssi_koodi in this_is_combined_key, 
-# take the combined key for onclick
+# From that row in recomm_united_done, where there is a matching Kurssi_koodi in this_is_combined_key, 
+# take the combined key
 
 to_plot_done <- to_plot %>% 
   ungroup() %>% 
   left_join(recomm_united_done, 
             by= c("Kurssi_koodi"="this_is_combined_key")) %>% 
-  mutate(uid = ifelse(is.na(combined), Kurssi_koodi, combined)) %>% 
+  mutate(uid = ifelse(is.na(combined), Kurssi_koodi, combined)) %>% # if the course is not done yet, use the course code 
   mutate(Lukukausi = Lukukausi.x) %>% 
   mutate(Vuosi = Vuosi.x) %>% 
   mutate(Opintopisteet = Opintopisteet.x) %>% 

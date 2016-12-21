@@ -149,9 +149,8 @@ draw_order <- function(df) {
 }
 
 
-# Filters data by student, 
-# checks if there are terms with no P (=poissaolo) and no points,
-# and calculates bar dimensions for the plots
+# Filters data by student, checks if there are terms with no "P" (=poissaolo) and no points (="Zero"),
+# and calculates bar dimensions and x axis values for the plots
 filterdata <- function(df, p) {
   
   courses_of_student <- df %>%
@@ -280,14 +279,13 @@ cColors <-
 data <- read.csv(data_file, stringsAsFactors = F, fileEncoding  = "UTF-8-BOM")
 
 # Remove courses with no code nore name
-data <- data %>% 
-  if(remove_blank_courses) { 
-    filter(Kurssi_koodi != '') 
-    }
+if(remove_blank_courses){
+  data <- data[data$Kurssi_koodi != "",]
+}
 
 # Sample
 #
-# data <- data[1:100,]
+data <- data[1:60,]
 
 # Remove single quotes from names
 data$Nimi <- gsub("'", "", data$Nimi)
@@ -336,24 +334,21 @@ recomm$Lukukausi <- gsub("\\s","", recomm$Lukukausi)
 # Join with color data
 recomm_joined <- left_join(recomm, colordata, by=c("Kurssikoodi"= "Kurssikoodi"))
 
-# Construct a combined key from all kurssikoodi variations
+# Construct a combined key from all course code variations
 recomm_united <- tidyr::unite_(recomm_joined, "combined", colnames(recomm_joined)[5:(ncol(recomm_joined)-2)])
 recomm_united$combined <- gsub("_NA","",recomm_united$combined)
 
-###################################
+####################################################
 #
-# 3. Render course data by student
-# as a HTML file 
-# with one or two SVG figures
+# 3. Render course data by student as a HTML file 
 #
-###################################
+####################################################
 
 sapply(unique(coursedata$Nimi), function(x) {
   
   Nimi <- x
   
-  # Other output formats are possible, too. 
-  # Change to something like
+  # Other output formats are possible, too. Change to something like
   ## sapply(c("pdf", "html", "doc"), function(y) {...}
   sapply("html", function(y) {
     
