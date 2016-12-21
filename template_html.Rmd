@@ -48,20 +48,20 @@ course_codes_from_to_plot_df <- list(to_plot$Kurssi_koodi)
 
 # Empty character vectors the size of the recommendations, 
 # first for indexing with "done", second for storing the combined key
-this_is_done <- character(nrow(suositus_united))
-this_is_combined_key <- character(nrow(suositus_united))
+this_is_done <- character(nrow(recomm_united))
+this_is_combined_key <- character(nrow(recomm_united))
 
 # For every course, check if there's a match
 for(i in seq_along(course_codes_from_to_plot_df[[1]])){
   if (!course_codes_from_to_plot_df[[1]][i] %in% c("P", "Zero")) { # skip P and Zero rows
-    this_is_done[grepl(x = suositus_united$combined, pattern = course_codes_from_to_plot_df[[1]][i])] <- "done"
-    this_is_combined_key[grepl(x = suositus_united$combined, pattern = course_codes_from_to_plot_df[[1]][i])] <- course_codes_from_to_plot_df[[1]][i]
+    this_is_done[grepl(x = recomm_united$combined, pattern = course_codes_from_to_plot_df[[1]][i])] <- "done"
+    this_is_combined_key[grepl(x = recomm_united$combined, pattern = course_codes_from_to_plot_df[[1]][i])] <- course_codes_from_to_plot_df[[1]][i]
   }
 } 
-suositus_united_done <- cbind(suositus_united, this_is_done, this_is_combined_key, stringsAsFactors = FALSE)
+recomm_united_done <- cbind(recomm_united, this_is_done, this_is_combined_key, stringsAsFactors = FALSE)
 
 # If output_vector=='', change Vari to white, i.e. not done yet
-courses_done <- suositus_united_done %>% 
+courses_done <- recomm_united_done %>% 
   rename(oldVari = Vari) %>% 
   mutate(Vari = ifelse(this_is_combined_key =='', "white", oldVari)) %>% 
   select(Vuosi, Lukukausi, Kurssinimi, Opintopisteet, Koodi, Vari, combined)
@@ -102,7 +102,7 @@ ggiraph(code = print(plot_o + facet_grid(. ~schoolyear,
 
 to_plot_done <- to_plot %>% 
   ungroup() %>% 
-  left_join(suositus_united_done, 
+  left_join(recomm_united_done, 
             by= c("Kurssi_koodi"="this_is_combined_key")) %>% 
   mutate(uid = ifelse(is.na(combined), Kurssi_koodi, combined)) %>% 
   mutate(Lukukausi = Lukukausi.x) %>% 

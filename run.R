@@ -11,8 +11,11 @@ library(readxl)
 #
 ##################
 
-colour_file <- "väri1tuijakaikki-1.xlsx"
+colour_file <- "data/colors.xlsx"
+data_file <- "data/CSExport.csv"
+recommendations_file <- "data/suositukset.xlsx"
 
+remove_blank_courses <- TRUE
 colour_course_default <- "cornsilk"
 colour_rect_margin <- "gray10"
 colour_absent <- "darkred"
@@ -21,7 +24,7 @@ colour_term_autumn <- "darkgoldenrod1"
 colour_term_spring_sum_points <- "white"
 colour_term_autumn_sum_points <- "black"
 colour_css_hoverfill <- "fill:orange; opacity: 0.5;"
-label_substring_length <- 30
+label_substring_length <- 30 # not in use at the moment
 term_height_base <- -0.30
 term_label_x_offset <- 1
 term_label_y <- -0.15
@@ -33,12 +36,12 @@ y_axis_max <- 3
 width_absent <- 10.1
 width_zeropoint <- 2.1
 height_absent <- 0.2
-max_years_per_row <- 8 
+max_years_per_row <- 8 # not in use at the moment 
 font_size <- 6
 y_axis_font_size <- 20
 year_font_size <- 20
 title_font_size <- 20
-# Second plot
+# Recommendation plot y axis
 y_axis_fix_value <- 5
 
 #######################################
@@ -47,7 +50,7 @@ y_axis_fix_value <- 5
 #
 ######################################
 
-
+# Draws the plot that shows which courses the student has done
 draw <- function(df) {
   
   df$onclick <- sprintf("highlight(this); function highlight(e) {var rect = document.querySelectorAll(\"rect[class^=cl_data_id_]\");for (var i = 0; i < rect.length; i++) { var thisattr = e.getAttribute(\"data-id\") ; if ( rect[i].classList.contains(\"myclass\") && rect[i].getAttribute(\"data-id\")===thisattr ) { rect[i].classList.remove(\"myclass\"); } else if ( !rect[i].classList.contains(\"myclass\") && rect[i].getAttribute(\"data-id\")===thisattr ) { rect[i].classList.add(\"myclass\"); } }}")
@@ -60,7 +63,6 @@ draw <- function(df) {
                               tooltip = tooltip,
                               onclick = onclick,
                               data_id = uid),
-                              #data_id=combinedkey),
                           fill = df$color,
                           colour = colour_rect_margin) +
     geom_rect(aes(xmin = wm, # Lukukausi
@@ -96,26 +98,21 @@ draw <- function(df) {
     scale_y_continuous(breaks = seq(0,
                                     y_axis_nr_empty_ticks_above_zero+length(y_axis_ticks),
                                     by=1),
-                       labels = c(y_axis_empty_ticks, y_axis_ticks)) 
-  # +
-  #  ggtitle(paste0(df$Opiskelijanumero, " ",  df$Nimi[1])) +
-  #  theme(plot.title = element_text(size = title_font_size))
-  #              " ",
-  #              ceiling(as.numeric(min(df$schoolyear))),
-  #              "-",
-  #              ceiling(as.numeric(max(df$schoolyear)))))
-  # 
+                       labels = c(y_axis_empty_ticks, y_axis_ticks)) +
+    ggtitle(paste0(df$Opiskelijanumero, " ",  df$Nimi[1])) +
+    theme(plot.title = element_text(size = title_font_size))
+
   return(p)
   
 }
 
+# Draws the plot that shows the recommended order of courses
 draw_order <- function(df) {
   
   df$onclick <- sprintf("highlight(this); function highlight(e) {var rect = document.querySelectorAll(\"rect[class^=cl_data_id_]\");for (var i = 0; i < rect.length; i++) { var thisattr = e.getAttribute(\"data-id\") ; if ( rect[i].classList.contains(\"myclass\") && rect[i].getAttribute(\"data-id\")===thisattr ) { rect[i].classList.remove(\"myclass\"); } else if ( !rect[i].classList.contains(\"myclass\") && rect[i].getAttribute(\"data-id\")===thisattr ) { rect[i].classList.add(\"myclass\"); } }}")
   
   p <- ggplot(df, aes(ymin = -0.20)) + 
     geom_rect_interactive(aes(xmin = wm,
-                              #xmax = ifelse(!is.na(w), w, x_axis_fix_value),
                               xmax = w,
                               ymin = 0,
                               ymax = y_axis_fix_value,
@@ -152,14 +149,15 @@ draw_order <- function(df) {
 }
 
 
-
+# Filters data by student, 
+# checks if there are terms with no P (=poissaolo) and no points,
+# and calculates bar dimensions for the plots
 filterdata <- function(df, p) {
   
   courses_of_student <- df %>%
     filter(Nimi == p)
   
-  # Add zero terms processing
-  #
+  # Zero terms processing
   # All combinations of term+schoolyear
   min_year <- min(courses_of_student$schoolyear)
   max_year <- max(courses_of_student$schoolyear)
@@ -190,16 +188,12 @@ filterdata <- function(df, p) {
   
   # and add to rest of data
   courses_of_student_w_zeros <- rbind(courses_of_student, zero_terms_df)
-  #courses_of_student_w_zeros <- courses_of_student_w_zeros %>% 
-    #mutate(uid = row.names(.))    
-    #mutate(uid = Kurssi_koodi)
-    #mutate(uid = Kurssi_nimi)
-  
-  
-  # arrange
+
+  # Arrange data by time
   courses_of_student <- courses_of_student_w_zeros %>% 
     arrange(schoolyear, desc(Lukukausi)) 
   
+  # Calculate x axis
   courses_grouped <- courses_of_student %>%
     group_by(schoolyear) %>%
     mutate(w = cumsum(width)) %>%
@@ -211,7 +205,7 @@ filterdata <- function(df, p) {
   return(courses_grouped)
 }
 
-
+# Labels for schoolyears 
 labels <- function(variable, value){
   if (variable == "schoolyear"){
     value[value == 1980] <- "1980-1981"
@@ -252,6 +246,8 @@ labels <- function(variable, value){
     value[value == 2015] <- "2015-2016"
     value[value == 2016] <- "2016-2017"
     value[value == 2017] <- "2017-2018"
+    value[value == 2018] <- "2018-2019"
+    value[value == 2019] <- "2019-2020"
   }
   return(value)
 }
@@ -268,8 +264,6 @@ labels <- function(variable, value){
 #
 ################################
 
-# colordata <- read_excel("kurssivari.xlsx", sheet=1)
-#colordata <- read.csv(colour_file, stringsAsFactors = F)
 colordata <- read_excel(colour_file, sheet = 1)
 
 cColors <-
@@ -277,27 +271,32 @@ cColors <-
        data.frame(course = Kurssikoodi,
                   color = I(Vari)))
 
-###############################
+#######################################
 #
 # 2. Import course data, and add color
 #
-###############################
+######################################
 
-data <- read.csv("CSExport.csv", stringsAsFactors = F, fileEncoding  = "UTF-8-BOM")
+data <- read.csv(data_file, stringsAsFactors = F, fileEncoding  = "UTF-8-BOM")
 
 # Remove courses with no code nore name
 data <- data %>% 
-  filter(Kurssi_koodi != '')
+  if(remove_blank_courses) { 
+    filter(Kurssi_koodi != '') 
+    }
 
-data <- data[1:100,]
+# Sample
+#
+# data <- data[1:100,]
 
-
-# Remove single quotes
+# Remove single quotes from names
 data$Nimi <- gsub("'", "", data$Nimi)
 data$Kurssi_nimi <- gsub("'", "", data$Kurssi_nimi)
 
+# Add color
 data_joined <- left_join(data, colordata, by=c("Kurssi_koodi"= "Kurssikoodi"))
 
+# Define schoolyear ranges, bar colors/heights/widths, and tooltip text
 coursedata <- data_joined %>%
   mutate(schoolyear = ifelse(Lukukausi == 'Kevät', Vuosi-1, Vuosi)) %>% # Kevät belongs to the school year that started the previous fall
   mutate(schoolyearrange = ifelse(Lukukausi == 'Kevät', paste0(Vuosi-1, "-", Vuosi), paste0(Vuosi,"-",Vuosi+1))) %>%  # for the tooltip
@@ -323,44 +322,42 @@ coursedata <- data_joined %>%
                           paste0(schoolyearrange, " ", Lukukausi, ": Poissaolo"))) %>%
   select(-Arvosana, -oldwith, -Koodi)
 
-##########################################
+################################################
 #
-# 2.1 Import suositus data, add color
+# 2.1 Import recommendations data, and add color
 #
-##############################################
-suositus <- read_excel("kandikurssisynonyymit.xlsx", sheet = 1)
-# Name empty columns
-names(suositus)[6:ncol(suositus)] <- paste0("col", seq(from=6, to=ncol(suositus), by=1))
-# Delete whitespace
-suositus$Lukukausi <- gsub("\\s","", suositus$Lukukausi)
-# Join with color data
-suositus_joined <- left_join(suositus, colordata, by=c("Kurssikoodi"= "Kurssikoodi"))
+################################################
 
-# tidyr::gather all combinations
-# suositus_joined_gathered <- suositus_joined %>%
-#   gather(n, k, -Vuosi, -Lukukausi, -Kurssinimi, -Opintopisteet, -Koodi, -Vari, na.rm=TRUE) %>%
-#   rename(Kurssikoodi=k) %>%
-#   select(-n)
+recomm <- read_excel(recommendations_file, sheet = 1)
+# Name empty columns
+names(recomm)[6:ncol(recomm)] <- paste0("col", seq(from=6, to=ncol(recomm), by=1))
+# Delete whitespace
+recomm$Lukukausi <- gsub("\\s","", recomm$Lukukausi)
+# Join with color data
+recomm_joined <- left_join(recomm, colordata, by=c("Kurssikoodi"= "Kurssikoodi"))
 
 # Construct a combined key from all kurssikoodi variations
-suositus_united <- tidyr::unite_(suositus_joined, "combined", colnames(suositus_joined)[5:(ncol(suositus_joined)-2)])
-suositus_united$combined <- gsub("_NA","",suositus_united$combined)
+recomm_united <- tidyr::unite_(recomm_joined, "combined", colnames(recomm_joined)[5:(ncol(recomm_joined)-2)])
+recomm_united$combined <- gsub("_NA","",recomm_united$combined)
 
-#################################
+###################################
 #
 # 3. Render course data by student
 # as a HTML file 
 # with one or two SVG figures
 #
-#################################
+###################################
 
 sapply(unique(coursedata$Nimi), function(x) {
   
   Nimi <- x
   
+  # Other output formats are possible, too. 
+  # Change to something like
+  ## sapply(c("pdf", "html", "doc"), function(y) {...}
   sapply("html", function(y) {
     
-    rmarkdown::render(paste0("kurssi_suositus2_", y, ".Rmd"),
+    rmarkdown::render(paste0("template_", y, ".Rmd"),
                       output_file = paste0(gsub("[ ,]","", Nimi), ".", y),
                       params = list(
                         person = Nimi))
