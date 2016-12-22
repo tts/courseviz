@@ -111,12 +111,14 @@ draw_order <- function(df) {
   
   df$onclick <- sprintf("highlight(this); function highlight(e) {var rect = document.querySelectorAll(\"rect[class^=cl_data_id_]\");for (var i = 0; i < rect.length; i++) { var thisattr = e.getAttribute(\"data-id\") ; if ( rect[i].classList.contains(\"myclass\") && rect[i].getAttribute(\"data-id\")===thisattr ) { rect[i].classList.remove(\"myclass\"); } else if ( !rect[i].classList.contains(\"myclass\") && rect[i].getAttribute(\"data-id\")===thisattr ) { rect[i].classList.add(\"myclass\"); } }}")
   
+  # You'll get "Warning: Ignoring unknown aesthetics: tooltip, onclick, data_id" which is probably due to
+  # https://github.com/tidyverse/ggplot2/issues/1909
   p <- ggplot(df, aes(ymin = -0.20)) + 
     geom_rect_interactive(aes(xmin = wm,
                               xmax = w,
                               ymin = 0,
                               ymax = y_axis_fix_value,
-                             # tooltip = tooltip,
+                              tooltip = tooltip,
                               onclick = onclick,
                               data_id = uid),
                           fill = df$Vari,
@@ -149,7 +151,7 @@ draw_order <- function(df) {
 }
 
 
-# Filters data by student, checks if there are terms with no "P" (=poissaolo) and no points (="Zero"),
+# Filters data by student, checks if there are terms with no "P" (=poissaolo) and no points (>"Zero"),
 # and calculates bar dimensions and x axis values for the plots
 filterdata <- function(df, p) {
   
@@ -285,7 +287,7 @@ if(remove_blank_courses){
 
 # Sample
 #
-data <- data[1:60,]
+data <- data[60:100,]
 
 # Remove single quotes from names
 data$Nimi <- gsub("'", "", data$Nimi)
