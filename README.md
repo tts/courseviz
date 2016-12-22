@@ -1,44 +1,20 @@
-# courseviz
+courseviz
+==========
 
-Plot barcharts from student course data
+Courseviz plots two barcharts on an HTML page, representing course data of a student on timeline. There is a tooltip, and corresponding courses are highlighted by clicking. Courseviz aims to help in checking how the student is progressing, how many study points she has done during the terms, and how much she has followed the recommended order of courses in the program.
 
-## Process steps and parameters
+### Prerequisites
 
-### Read in basic data
+* basic **course** data in CSV from reporting services: student number, student name, course code, course name, year, term, study points, score
+* an Excel spreadsheet to **color** courses by type: course code, name of the course type, and color name for that type (TODO: matching step)
+* an Excel spreadsheet with the **recommended order** of taking courses: year (1, 2 etc), term, course name, study points, course codes (alternatives in successive cells in the same row)
 
-* Read in course data 
-  + *data_file*
-  + filter rows non-empty coursed codes if needed
-    + *remove_blank_courses*
-* Read in course+color data
-  + *colour_file*
-* Join courses to colors
-* Add new data attributes, and wrangle data for plotting purposes
-  + add schoolyear
-  + if term is Spring, substract Year with 1 (because schoolyear starts from Fall)
-  + add schoolyearrange (e.g. 2015-2016) for the tooltip
-  + add color. In case there was no special color in the color file, and the course name is not P (absent), use a default one. If the course is P, use that color
-    + *colour_course_default*
-    + *colour_rect_margin*
-    + *colour_absent*
-    + *colour_term_spring*
-    + *colour_term_autumn*
-  + add height. Check if there are grades given in strings rather than in integers. Calculate height based on the number of empty slots on the y axis (for viz purposes) 
-    + *y_axis_max*
-    + *height_absent*
-  + add width
-    + *width_zeropoint*
-    + *width_absent*
-    + *width_zeropoint*
-  + add tooltip
-* Read in recommendations data, and join with color data
-  + *recommendations_file*
-* Construct a combined key from all course code variations
+### How to use
 
-### Filter data by student
+Save data files in `data` subdirectory, and run `run.R`. The HTML files are outputted in the work directory, one file per student. 
+
+If you are looking for a solution that produces a whole HTML site structure with index.html etc, see [coursevizsite](https://github.com/tts/coursevizsite)
 
 
-### Render plots
-  
-  
+
   
