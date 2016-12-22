@@ -15,6 +15,12 @@ Save data files in `data` subdirectory, and run `run.R`. The HTML files are outp
 
 If you are looking for a solution that produces a whole HTML site structure with index.html etc, see [coursevizsite](https://github.com/tts/coursevizsite)
 
+### Known caveats
+
+The onclick event on SVG does not work with [Internet Explorer 11](https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/1173756/).
+
+With some Firefox variants, the tooltip is doubled. I have myself seen this on FF ESR 45.5.1.
+
 ### Credits
 
 Thanks to RStudio for [R Markdown](http://rmarkdown.rstudio.com), Yihui Xie et al. for [knitr](https://github.com/yihui/knitr), Hadley Wickham et al. for [dplyr](https://github.com/hadley/dplyr), [tidyr](https://github.com/tidyverse/tidyr), [ggplot2](https://github.com/tidyverse/ggplot2) and [readxl](https://github.com/hadley/readxl), David Gohel for [ggiraph](https://github.com/davidgohel/ggiraph), and the whole R community for all the rest. 
