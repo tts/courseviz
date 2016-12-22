@@ -15,6 +15,10 @@ Save data files in `data` subdirectory, and run `run.R`. The HTML files are outp
 
 If you are looking for a solution that produces a whole HTML site structure with index.html etc, see [coursevizsite](https://github.com/tts/coursevizsite)
 
+### Credits
+
+Thanks to RStudio for [R Markdown Websites](http://rmarkdown.rstudio.com/rmarkdown_websites.html), Hadley Wickham and other contributors for [dplyr](https://github.com/hadley/dplyr), [tidyr](https://github.com/tidyverse/tidyr), [ggplot2](https://github.com/tidyverse/ggplot2) and [readxl](https://github.com/hadley/readxl), David Gohel for [ggiraph](https://github.com/davidgohel/ggiraph), and the whole R community for all the rest. 
+
 
 
   
