@@ -17,6 +17,8 @@ If you are looking for a solution that produces a whole HTML site structure with
 
 ### Known caveats
 
+Currently, there is an [encoding issue](https://github.com/davidgohel/ggiraph/issues/27) on ggiraph on Windows platform.
+
 The onclick event on SVG does not work with [Internet Explorer 11](https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/1173756/).
 
 With some Firefox variants, the tooltip is doubled. I have myself seen this on FF ESR 45.5.1.
