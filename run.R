@@ -24,7 +24,7 @@ colour_term_autumn <- "darkgoldenrod1"
 colour_term_spring_sum_points <- "white"
 colour_term_autumn_sum_points <- "black"
 colour_css_hoverfill <- "fill:orange; opacity: 0.5;"
-label_substring_length <- 30 # not in use at the moment
+label_substring_length <- 35
 term_height_base <- -0.30
 term_label_x_offset <- 1
 term_label_y <- -0.15
@@ -36,13 +36,12 @@ y_axis_max <- 3
 width_absent <- 10.1
 width_zeropoint <- 2.1
 height_absent <- 0.2
-max_years_per_row <- 8 # not in use at the moment 
 font_size <- 6
 y_axis_font_size <- 20
 year_font_size <- 20
 title_font_size <- 20
 # Recommendation plot y axis
-y_axis_fix_value <- 5
+y_axis_fix_value <- 3
 
 #######################################
 #
@@ -114,7 +113,7 @@ draw <- function(df) {
     scale_y_continuous(breaks = seq(0,
                                     y_axis_nr_empty_ticks_above_zero+length(y_axis_ticks),
                                     by=1),
-                       labels = c(y_axis_empty_ticks, y_axis_ticks)) +
+                       labels = c(y_axis_empty_ticks, y_axis_ticks))  +
     ggtitle(paste0(df$Opiskelijanumero, " ",  df$Nimi[1])) +
     theme(plot.title = element_text(size = title_font_size))
 
@@ -146,12 +145,12 @@ draw_order <- function(df) {
               fill = ifelse(df$Lukukausi == "Syksy", colour_term_autumn, colour_term_spring)) +
     geom_text(aes(x = wt, # Opintopisteet
                   y = y_axis_fix_value + 0.1,
-                  label = ifelse(width != 1.1, width, "")), # Kyps etc
+                  label = ifelse(!width %in% c(1.1,5.1), width, "")), # Kyps etc
               size = font_size) +
     geom_text(aes(x = wt, # Kurssikoodi ja nimi
                   y = y_axis_fix_value * 0.5,
                   # label = Kurssikoodi,
-                  label = Kurssinimi,
+                  label = substr(Kurssinimi, 1, label_substring_length),
                   angle = 90),
               size = font_size,
               colour = ifelse(df$Vari %in% dark_colors, 'white', 'black')) +
