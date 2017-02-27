@@ -15,6 +15,8 @@ colour_file <- "data/colors.xlsx"
 data_file <- "data/CSExport.csv"
 recommendations_file <- "data/suositukset.xlsx"
 
+kevat <- "Kevät"
+
 remove_blank_courses <- TRUE
 colour_course_default <- "cornsilk"
 colour_rect_margin <- "gray10"
@@ -84,12 +86,12 @@ draw <- function(df) {
                   xmax = w,
                   ymin = term_height_base,
                   ymax = 0),
-              fill = ifelse(df$Lukukausi == 'Kevät', colour_term_spring, colour_term_autumn)) +
+              fill = ifelse(df$Lukukausi == kevat, colour_term_spring, colour_term_autumn)) +
     geom_text(aes(x = w-term_label_x_offset, # Opintopisteet per lukukausi
                   y = term_label_y,
                   label = termsum),
               size = font_size,
-              colour=ifelse(df$Lukukausi == 'Kevät', colour_term_spring_sum_points, colour_term_autumn_sum_points)) +
+              colour=ifelse(df$Lukukausi == kevat, colour_term_spring_sum_points, colour_term_autumn_sum_points)) +
     geom_text(aes(x = wt, # Opintopisteet
                   y = height + 0.1,
                   label = ifelse(width != width_absent, width, "")),
@@ -178,7 +180,7 @@ filterdata <- function(df, p) {
   min_year <- min(courses_of_student$schoolyear)
   max_year <- max(courses_of_student$schoolyear)
   schoolyear <- rep(seq(min_year, max_year, 1), each=2)
-  Lukukausi <- rep(c("Syksy", "Kevät"), length.out=length(schoolyear))
+  Lukukausi <- rep(c("Syksy", kevat), length.out=length(schoolyear))
   year_term <- data.frame(schoolyear, Lukukausi, stringsAsFactors = F)
   
   courses_join_year_term <-  merge(courses_of_student, year_term, by = c("Lukukausi", "schoolyear"), all.y = T)
@@ -193,9 +195,9 @@ filterdata <- function(df, p) {
     mutate(Kurssi_koodi = "Zero") %>% 
     mutate(Kurssi_nimi = "Ei suorituksia, ei poissaoloa") %>% 
     mutate(Opintopisteet = 0) %>% 
-    mutate(Vuosi = ifelse(Lukukausi == 'Kevät', schoolyear+1, schoolyear)) %>% 
+    mutate(Vuosi = ifelse(Lukukausi == kevat, schoolyear+1, schoolyear)) %>% 
     mutate(Vari = "black") %>% 
-    mutate(schoolyearrange = ifelse(Lukukausi == 'Kevät', paste0(Vuosi-1, "-", Vuosi), paste0(Vuosi,"-",Vuosi+1)))  %>% 
+    mutate(schoolyearrange = ifelse(Lukukausi == kevat, paste0(Vuosi-1, "-", Vuosi), paste0(Vuosi,"-",Vuosi+1)))  %>% 
     mutate(color = "black") %>% 
     mutate(height = height_absent) %>% 
     mutate(width = width_absent) %>% 
@@ -302,7 +304,7 @@ if(remove_blank_courses){
 
 # Sample
 #
-data <- data[1:160,]
+# data <- data[1:100,]
 
 # Remove single quotes from names
 data$Nimi <- gsub("'", "", data$Nimi)
@@ -313,8 +315,8 @@ data_joined <- left_join(data, colordata, by=c("Kurssi_koodi"= "Kurssikoodi"))
 
 # Define schoolyear ranges, bar colors/heights/widths, and tooltip text
 coursedata <- data_joined %>%
-  mutate(schoolyear = ifelse(Lukukausi == 'Kevät', Vuosi-1, Vuosi)) %>% # Kevät belongs to the school year that started the previous fall
-  mutate(schoolyearrange = ifelse(Lukukausi == 'Kevät', paste0(Vuosi-1, "-", Vuosi), paste0(Vuosi,"-",Vuosi+1))) %>%  # for the tooltip
+  mutate(schoolyear = ifelse(Lukukausi == kevat, Vuosi-1, Vuosi)) %>% # Kevät belongs to the school year that started the previous fall
+  mutate(schoolyearrange = ifelse(Lukukausi == kevat, paste0(Vuosi-1, "-", Vuosi), paste0(Vuosi,"-",Vuosi+1))) %>%  # for the tooltip
   mutate(color = ifelse(is.na(Vari) & Kurssi_koodi != 'P', colour_course_default, 
                         ifelse(is.na(Vari) & Kurssi_koodi == 'P', colour_absent, 
                                cColors$color[match(Kurssi_koodi, cColors$course)]))) %>% 
@@ -367,6 +369,8 @@ sapply(unique(coursedata$Nimi), function(x) {
   
   # Other output formats are possible, too. Change to something like
   ## sapply(c("pdf", "html", "doc"), function(y) {...}
+
+  
   sapply("html", function(y) {
     
     rmarkdown::render(paste0("template_", y, ".Rmd"),
