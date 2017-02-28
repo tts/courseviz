@@ -303,7 +303,7 @@ cColors <-
 # Crashes in Windows
 # data <- readxl::read_excel(data_file, sheet = "CSExport")
 
-data <- openxlsx::read.xlsx("data/CSExport2.xlsx", sheet = "CSExport")
+data <- openxlsx::read.xlsx(data_file, sheet = "CSExport")
 
 # Remove courses with no code nore name
 if(remove_blank_courses){
