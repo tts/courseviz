@@ -303,7 +303,6 @@ cColors <-
 # Crashes in Windows
 # data <- readxl::read_excel(data_file, sheet = "CSExport")
 
-# Note that this SSRS outputted file needs to be first opened and saved via Excel. Something odd going on here.
 data <- openxlsx::read.xlsx("data/CSExport2.xlsx", sheet = "CSExport")
 
 # Remove courses with no code nore name
