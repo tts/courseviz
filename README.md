@@ -17,7 +17,9 @@ If you are looking for a solution that produces a whole HTML site structure with
 
 ### Known caveats
 
-Currently, there is an [encoding issue](https://github.com/davidgohel/ggiraph/issues/27) on ggiraph on Windows platform. This affects also the tooltip generation. Therefore, as a temporal solution, there is a separate script for Windows, plus respective template. Due to a local issue on the CSV data file production chain, data is read from an Excel file in this Windows version.
+Currently, there is an [encoding issue](https://github.com/davidgohel/ggiraph/issues/27) on ggiraph on Windows platform. This affects also the tooltip generation, so there is a small and hacky workaround.
+
+Due to an inhouse issue on the CSV file production chain, data is read from an Excel file if the OS is Windows.
 
 The onclick event on SVG does not work with [Internet Explorer 11](https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/1173756/).
 

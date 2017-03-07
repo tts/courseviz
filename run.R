@@ -4,6 +4,27 @@ library(ggplot2)
 library(ggiraph)
 library(readxl)
 
+####################
+#
+# Determine OS
+#
+####################
+
+# https://github.com/hadley/rappdirs/blob/master/R/utils.r#L1
+
+get_os <- function() {
+  if (.Platform$OS.type == "windows") { 
+    "win"
+  } else if (Sys.info()["sysname"] == "Darwin") {
+    "mac" 
+  } else if (.Platform$OS.type == "unix") { 
+    "unix"
+  } else {
+    stop("Unknown OS")
+  }
+}
+
+os <- get_os()
 
 ##################
 #
@@ -12,7 +33,7 @@ library(readxl)
 ##################
 
 colour_file <- "data/colors.xlsx"
-data_file <- "data/CSExport.csv"
+data_file <- ifelse(os == "win", "data/CSExport.xlsx", "data/CSExport.csv")
 recommendations_file <- "data/suositukset.xlsx"
 
 kevat <- "Kevät"
@@ -44,6 +65,8 @@ year_font_size <- 20
 title_font_size <- 20
 # Recommendation plot y axis
 y_axis_fix_value <- 3
+
+
 
 #######################################
 #
@@ -118,7 +141,7 @@ draw <- function(df) {
                        labels = c(y_axis_empty_ticks, y_axis_ticks))  +
     ggtitle(paste0(df$Opiskelijanumero, " ",  df$Nimi[1])) +
     theme(plot.title = element_text(size = title_font_size))
-
+  
   return(p)
   
 }
@@ -201,12 +224,15 @@ filterdata <- function(df, p) {
     mutate(color = "black") %>% 
     mutate(height = height_absent) %>% 
     mutate(width = width_absent) %>% 
-    mutate(tooltip = paste0(schoolyearrange, " ", Lukukausi, ": Ei suorituksia")) %>% 
+    # Hack, but needs to be done in Windows as long as ggiraph does not produce correct encoding
+    mutate(tooltip = ifelse(os == "win",
+                            paste0(schoolyearrange, " ", ifelse(Lukukausi=="Syksy", "Syksy", "Kevat"), ": Ei suorituksia"),
+                            ifelse(os != "win", paste0(schoolyearrange, " ", Lukukausi, ": Ei suorituksia")))) %>% 
     select(Opiskelijanumero,Nimi,Kurssi_koodi,Kurssi_nimi,Opintopisteet,Lukukausi,Vuosi,Vari,schoolyear,schoolyearrange,color,height,width,tooltip)
   
   # and add to rest of data
   courses_of_student_w_zeros <- rbind(courses_of_student, zero_terms_df)
-
+  
   # Arrange data by time
   courses_of_student <- courses_of_student_w_zeros %>% 
     arrange(schoolyear, desc(Lukukausi)) 
@@ -295,48 +321,62 @@ cColors <-
 #
 ######################################
 
-data <- read.csv(data_file, stringsAsFactors = F, fileEncoding  = "UTF-8-BOM")
+if( os == "win") {
+  data <- openxlsx::read.xlsx(data_file, sheet = "CSExport")
+} else {
+  data <- read.csv(data_file, stringsAsFactors = F, fileEncoding  = "UTF-8-BOM")
+}
+               
+
+# Sample
+#
+data <- data[1:50,]
+
+# Rename columns to be the same regardless of the OS and import file type
+names(data) <- c("Opiskelijanumero", "Nimi", "Kurssi_koodi", "Kurssi_nimi", "Arvosana", "Opintopisteet", "Lukukausi", "Vuosi")
+
+# Similarly, change NA's to empty string
+data$Kurssi_nimi[is.na(data$Kurssi_nimi)] <- ""
+data$Arvosana[is.na(data$Arvosana)] <- ""
+
+# Remove single quotes from names
+data$Nimi <- gsub("'", "", data$Nimi)
+data$Kurssi_nimi <- gsub("'", "", data$Kurssi_nimi)
 
 # Remove courses with no code nore name
 if(remove_blank_courses){
   data <- data[data$Kurssi_koodi != "",]
 }
 
-# Sample
-#
-# data <- data[1:100,]
-
-# Remove single quotes from names
-data$Nimi <- gsub("'", "", data$Nimi)
-data$Kurssi_nimi <- gsub("'", "", data$Kurssi_nimi)
-
 # Add color
 data_joined <- left_join(data, colordata, by=c("Kurssi_koodi"= "Kurssikoodi"))
 
 # Define schoolyear ranges, bar colors/heights/widths, and tooltip text
 coursedata <- data_joined %>%
-  mutate(schoolyear = ifelse(Lukukausi == kevat, Vuosi-1, Vuosi)) %>% # Kevät belongs to the school year that started the previous fall
+  mutate(schoolyear = ifelse(Lukukausi == kevat, Vuosi-1, Vuosi)) %>% # Kev?t belongs to the school year that started the previous fall
   mutate(schoolyearrange = ifelse(Lukukausi == kevat, paste0(Vuosi-1, "-", Vuosi), paste0(Vuosi,"-",Vuosi+1))) %>%  # for the tooltip
   mutate(color = ifelse(is.na(Vari) & Kurssi_koodi != 'P', colour_course_default, 
                         ifelse(is.na(Vari) & Kurssi_koodi == 'P', colour_absent, 
                                cColors$color[match(Kurssi_koodi, cColors$course)]))) %>% 
   mutate(height = sapply(Arvosana, function(x){
-    as.numeric(ifelse(x == 'hyv', 3+y_axis_max  , # hyväksytty
-                    ifelse(x == 'kh', 5+y_axis_max, # kh esim. TFM.kand
-                           ifelse(x == 'tt', 3+y_axis_max, # tyydyttävät tiedot
-                                  ifelse(x == 'ht', 5+y_axis_max,  # hyvät tiedot
-                                         ifelse(x == 'et', 5+y_axis_max, # erinomaiset tiedot
-                                                ifelse(x == '', height_absent, as.numeric(x)+y_axis_max)))))))
-    })) %>%
+    as.numeric(ifelse(x == 'hyv', 3+y_axis_max  , # hyv?ksytty
+                      ifelse(x == 'kh', 5+y_axis_max, # kh esim. TFM.kand
+                             ifelse(x == 'tt', 3+y_axis_max, # tyydytt?v?t tiedot
+                                    ifelse(x == 'ht', 5+y_axis_max,  # hyv?t tiedot
+                                           ifelse(x == 'et', 5+y_axis_max, # erinomaiset tiedot
+                                                  ifelse(x == '', height_absent, as.numeric(x)+y_axis_max)))))))
+  })) %>%
   mutate(width = sapply(Opintopisteet, function(x){
     ifelse(x == 0.0, width_zeropoint, x)
   })) %>%
   mutate(width2 = ifelse(is.na(width), width_absent, width)) %>%
   rename(oldwith = width) %>%
   rename(width = width2) %>%
-  mutate(tooltip = ifelse(Kurssi_nimi != '',
-                          paste0(schoolyearrange, " ", Lukukausi, ": ", Kurssi_nimi, " (", Arvosana, ")"),
-                          paste0(schoolyearrange, " ", Lukukausi, ": Poissaolo"))) %>%
+  # Hack, but needs to be done in Windows as long as ggiraph does not produce correct encoding
+  mutate(tooltip = ifelse(os == "win" & Kurssi_nimi != "", paste0(schoolyearrange, " ", ifelse(Lukukausi=="Syksy", "Syksy", "Kevat"), ": ", Kurssi_nimi, " (", Arvosana, ")"),
+                          ifelse(os == "win" & Kurssi_nimi == "", paste0(schoolyearrange, " ", ifelse(Lukukausi=="Syksy", "Syksy", "Kevat"), ": Poissaolo"),
+                                 ifelse(os != "win" & Kurssi_nimi != "", paste0(schoolyearrange, " ", Lukukausi, ": ", Kurssi_nimi, " (", Arvosana, ")"),
+                                         ifelse(os != "win" & Kurssi_nimi == "", paste0(schoolyearrange, " ", Lukukausi, ": Poissaolo"), "NA"))))) %>% 
   select(-Arvosana, -oldwith, -Koodi)
 
 ################################################
@@ -369,7 +409,7 @@ sapply(unique(coursedata$Nimi), function(x) {
   
   # Other output formats are possible, too. Change to something like
   ## sapply(c("pdf", "html", "doc"), function(y) {...}
-
+  
   
   sapply("html", function(y) {
     
@@ -380,6 +420,5 @@ sapply(unique(coursedata$Nimi), function(x) {
   })
   
 })
-
 
 
